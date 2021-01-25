@@ -16,16 +16,18 @@ class Logger:
 
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
-        
-        console_level = kwargs.get('console_level')
-        console_level = console_level if console_level else logging.INFO
+
         fmt = kwargs.get('format')
         fmt = fmt if fmt else "%(name)s - [%(asctime)s][%(levelname)s] %(message)s"
 
+        formater = logging.Formatter(fmt)
+
+        console_level = kwargs.get('console_level')
+        console_level = console_level if console_level else logging.INFO
+
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(level)
-        fmt = logging.Formatter(format)
-        stream_handler.setFormatter(fmt)
+        stream_handler.setFormatter(formater)
 
         filename = kwargs.get('filename')
         filename = filename if filename else __name__ + '.log'
@@ -34,10 +36,10 @@ class Logger:
 
         file_handler = logging.FileHandler(filename)
         file_handler.setLevel(level)
+        file_handler.setFormatter(formater)
 
         self.logger.addHandler(stream_handler)
         self.logger.addHandler(file_handler)
-
 
     def log(self, message, level='debug'):
         lvl = level.lower()
