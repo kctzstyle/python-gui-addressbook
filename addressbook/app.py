@@ -1,8 +1,61 @@
 
 import tkinter as tk
+import tkinter.ttk as ttk
+
+from .db import AddressBookDAO
 
 
 class Application(tk.Frame):
+
+    def __init__(self, master=None):
+        super().__init__(master)
+
+        self.dao = AddressBookDAO()
+
+        self.create_widgets()
+        self.grid_widgets()
+        self.setting_widgets()
+
+    def create_widgets(self):
+        self.trvTable = ttk.Treeview()
+        self.trvScroll = ttk.Scrollbar()
+        self.btnAdd = ttk.Button()
+        self.btnRemove = ttk.Button()
+
+    def grid_widgets(self):
+        self.trvTable.pack(side='left')
+        self.trvScroll.pack(side='right', fill='y')
+        # self.lblText.pack()
+
+    def setting_widgets(self):
+        columns = self.dao.table_columns()
+        self.trvTable['columns'] = [col[0]+1 for col in columns]
+        self.trvTable['height'] = 5
+        self.trvTable['show'] = 'headings'
+
+        for col in columns:
+            self.trvTable.heading(col[0]+1, text=col[1])
+            self.trvTable.column(col[0]+1, width=100)
+
+        self.trvScroll['orient'] = 'vertical'
+        self.trvScroll['command'] = self.trvTable.yview
+
+        self.trvTable.configure(yscrollcommand=self.trvScroll.set)
+
+        data = self.dao.view_all()
+        for v in data:
+            self.trvTable.insert('', 'end', values=tuple(v))
+
+        self.trvTable.bind('<ButtonRelease-1>', self.click_item)
+
+    def click_item(self, event):
+        selectedItem = self.trvTable.focus()
+        value = self.trvTable.item(selectedItem).get('values')
+        # self.lblText.configure(text=value)
+
+
+# TODO: ADD 버튼 누르면 주소록 입력창 띄우도록 하기
+class AddressBookApplication(tk.Frame):
 
     def __init__(self, master=None):
         super().__init__(master)

@@ -63,6 +63,44 @@ class AddressBookDAO:
         finally:
             cur.close()
         return status
+    
+    def table_info(self):
+        query = """
+        SELECT tbl_name
+        FROM sqlite_master
+        """
+        self.logger.info(f"QUERY: {query}")
+
+        try:
+            cur = self.Connection.cursor()
+            cur.execute(query)
+            result = cur.fetchall()
+        except Exception as e:
+            self.logger.error(e)
+        finally:
+            cur.close()
+        return result
+
+    def table_columns(self):
+        # query = f"""
+        # SELECT sql
+        # FROM sqlite_master
+        # WHERE tbl_name='{TABLE_NAME}';
+        # """
+        query = f"""
+        PRAGMA table_info({TABLE_NAME});
+        """
+        self.logger.info(f"QUERY: {query}")
+
+        try:
+            cur = self.Connection.cursor()
+            cur.execute(query)
+            result = cur.fetchall()
+        except Exception as e:
+            self.logger.error(e)
+        finally:
+            cur.close()
+        return result
 
     def view(self, addr: AddressBook):
         query = f"""
