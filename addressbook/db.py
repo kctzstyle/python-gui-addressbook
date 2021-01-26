@@ -2,6 +2,8 @@
 import sqlite3
 import os
 
+from abc import ABCMeta
+
 from .log import Logger
 from .models import AddressBook
 
@@ -10,14 +12,19 @@ DB_NAME = "addressbook.db"
 TABLE_NAME = "ADDRESS_BOOK"
 
 
-class AddressBookDAO:
+class BaseDAO(metaclass=ABCMeta):
 
-    def __init__(self):
-        db_name = os.path.join('db', DB_NAME)
+    def __init__(self, **kwargs):
+        db_name = kwargs.get('db_name')
+        logger_name = kwargs.get('logger_name')
+        logger_filename = kwargs.get('logger_filename')
+
+        db_name = db_name if db_name else 'base.db'
+        logger_name = logger_name if logger_name else 'DAO'
+        logger_filename = logger_filename if logger_filename else 'DAO.log'
+
         self.connect(db_name=db_name)
-
-        filename = os.path.join('log', 'AddressBookDao.log')
-        self.logger = Logger(name='AddressBookDAO', filename=filename)
+        self.logger = Logger(name=logger_name, filename=logger_filename)
 
     @property
     def Connection(self):
@@ -29,7 +36,7 @@ class AddressBookDAO:
 
     def connect(self, db_name=DB_NAME):
         self.Connection = db_name
-    
+
     def create(self, table_name=TABLE_NAME, drop=False):
         try:
             cur = self.Connection.cursor()
@@ -37,7 +44,7 @@ class AddressBookDAO:
             if drop:
                 query = f"DROP TABLE {table_name};"
                 self.logger.info(f"QUERY: {query}")
-                
+
                 cur.execute(query)
                 self.Connection.commit()
 
@@ -63,7 +70,7 @@ class AddressBookDAO:
         finally:
             cur.close()
         return status
-    
+
     def table_info(self):
         query = """
         SELECT tbl_name
@@ -81,15 +88,8 @@ class AddressBookDAO:
             cur.close()
         return result
 
-    def table_columns(self):
-        # query = f"""
-        # SELECT sql
-        # FROM sqlite_master
-        # WHERE tbl_name='{TABLE_NAME}';
-        # """
-        query = f"""
-        PRAGMA table_info({TABLE_NAME});
-        """
+    def table_columns(self, table_name=TABLE_NAME):
+        query = f"PRAGMA table_info({table_name});"
         self.logger.info(f"QUERY: {query}")
 
         try:
@@ -101,6 +101,20 @@ class AddressBookDAO:
         finally:
             cur.close()
         return result
+
+
+class AddressBookDAO(BaseDAO):
+
+    def __init__(self, **kwargs):
+        db_name = os.path.join('db', DB_NAME)
+        logger_name = 'AddressBookDAO'
+        filename = os.path.join('log', 'AddressBookDao.log')
+
+        super().__init__(
+            db_name=db_name,
+            logger_name=logger_name,
+            logger_filename=filename
+        )
 
     def view(self, addr: AddressBook):
         query = f"""
